@@ -80,7 +80,7 @@ class _MyAppState extends State<MyApp> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
               Text(
-                'Steps Taken',
+                'Steps Taken by me',
                 style: TextStyle(fontSize: 30),
               ),
               Text(
