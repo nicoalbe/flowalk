@@ -1,121 +1,123 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:pedometer/pedometer.dart';
 import 'dart:async';
+import 'package:firebase_ui_auth/firebase_ui_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';     
+import 'package:google_fonts/google_fonts.dart';
+
+import 'app_state.dart';
+import 'homepage.dart';
 
 String formatDate(DateTime d) {
   return d.toString().substring(0, 19);
 }
 
 void main() {
-  runApp(MyApp());
+  WidgetsFlutterBinding.ensureInitialized();
+
+  runApp(ChangeNotifierProvider(
+    create: (context) => ApplicationState(),
+    builder: ((context, child) => const App()),
+  ));
 }
 
-class MyApp extends StatefulWidget {
-  @override
-  _MyAppState createState() => _MyAppState();
-}
+final _router = GoRouter(
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const HomePage(),
+      routes: [
+        GoRoute(
+          path: 'sign-in',
+          builder: (context, state) {
+            return SignInScreen(
+              actions: [
+                ForgotPasswordAction(((context, email) {
+                  final uri = Uri(
+                    path: '/sign-in/forgot-password',
+                    queryParameters: <String, String?>{
+                      'email': email,
+                    },
+                  );
+                  context.push(uri.toString());
+                })),
+                AuthStateChangeAction(((context, state) {
+                  final user = switch (state) {
+                    SignedIn state => state.user,
+                    UserCreated state => state.credential.user,
+                    _ => null
+                  };
+                  if (user == null) {
+                    return;
+                  }
+                  if (state is UserCreated) {
+                    user.updateDisplayName(user.email!.split('@')[0]);
+                  }
+                  if (!user.emailVerified) {
+                    user.sendEmailVerification();
+                    const snackBar = SnackBar(
+                        content: Text(
+                            'Please check your email to verify your email address'));
+                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                  }
+                  context.pushReplacement('/');
+                })),
+              ],
+            );
+          },
+          routes: [
+            GoRoute(
+              path: 'forgot-password',
+              builder: (context, state) {
+                final arguments = state.uri.queryParameters;
+                return ForgotPasswordScreen(
+                  email: arguments['email'],
+                  headerMaxExtent: 200,
+                );
+              },
+            ),
+          ],
+        ),
+        GoRoute(
+          path: 'profile',
+          builder: (context, state) {
+            return ProfileScreen(
+              providers: const [],
+              actions: [
+                SignedOutAction((context) {
+                  context.pushReplacement('/');
+                }),
+              ],
+            );
+          },
+        ),
+      ],
+    ),
+  ],
+);
 
-class _MyAppState extends State<MyApp> {
-  late Stream<StepCount> _stepCountStream;
-  late Stream<PedestrianStatus> _pedestrianStatusStream;
-  String _status = '?', _steps = '?';
 
-  @override
-  void initState() {
-    super.initState();
-    initPlatformState();
-  }
 
-  void onStepCount(StepCount event) {
-    print(event);
-    setState(() {
-      _steps = event.steps.toString();
-    });
-  }
-
-  void onPedestrianStatusChanged(PedestrianStatus event) {
-    print(event);
-    setState(() {
-      _status = event.status;
-    });
-  }
-
-  void onPedestrianStatusError(error) {
-    print('onPedestrianStatusError: $error');
-    setState(() {
-      _status = 'Pedestrian Status not available';
-    });
-    print(_status);
-  }
-
-  void onStepCountError(error) {
-    print('onStepCountError: $error');
-    setState(() {
-      _steps = 'Step Count not available';
-    });
-  }
-
-  void initPlatformState() {
-    _pedestrianStatusStream = Pedometer.pedestrianStatusStream;
-    _pedestrianStatusStream
-        .listen(onPedestrianStatusChanged)
-        .onError(onPedestrianStatusError);
-
-    _stepCountStream = Pedometer.stepCountStream;
-    _stepCountStream.listen(onStepCount).onError(onStepCountError);
-
-    if (!mounted) return;
-  }
+class App extends StatelessWidget {
+  const App({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Pedometer Example'),
+    return MaterialApp.router(
+      title: 'Flowalk',
+      theme: ThemeData(
+        buttonTheme: Theme.of(context).buttonTheme.copyWith(
+              highlightColor: Colors.deepPurple,
+            ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        textTheme: GoogleFonts.robotoTextTheme(
+          Theme.of(context).textTheme,
         ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                'Steps Taken by me',
-                style: TextStyle(fontSize: 30),
-              ),
-              Text(
-                _steps,
-                style: TextStyle(fontSize: 60),
-              ),
-              Divider(
-                height: 100,
-                thickness: 0,
-                color: Colors.white,
-              ),
-              Text(
-                'Pedestrian Status',
-                style: TextStyle(fontSize: 30),
-              ),
-              Icon(
-                _status == 'walking'
-                    ? Icons.directions_walk
-                    : _status == 'stopped'
-                        ? Icons.accessibility_new
-                        : Icons.error,
-                size: 100,
-              ),
-              Center(
-                child: Text(
-                  _status,
-                  style: _status == 'walking' || _status == 'stopped'
-                      ? TextStyle(fontSize: 30)
-                      : TextStyle(fontSize: 20, color: Colors.red),
-                ),
-              )
-            ],
-          ),
-        ),
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        useMaterial3: true,
       ),
+      routerConfig: _router,
     );
   }
 }
