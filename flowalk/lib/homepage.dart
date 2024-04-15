@@ -12,6 +12,7 @@ import 'package:pedometer/pedometer.dart';
 import 'app_state.dart';                          
 import 'src/authentication.dart';                 
 import 'src/widgets.dart';
+import 'step_counter.dart';
 //import 'guest_book.dart';
 
 class HomePage extends StatefulWidget {
@@ -25,7 +26,7 @@ class _HomePageState extends State<HomePage> {
   late Stream<StepCount> _stepCountStream;
   String _steps = '?';
 
-  @override
+  /*@override
     void initState() {
       super.initState();
       initPlatformState();
@@ -51,7 +52,7 @@ class _HomePageState extends State<HomePage> {
     _stepCountStream.listen(onStepCount).onError(onStepCountError);
 
     if (!mounted) return;
-  }
+  }*/
 
   @override
   Widget build(BuildContext context) {
@@ -61,11 +62,14 @@ class _HomePageState extends State<HomePage> {
       ),
       body: ListView(
         children: <Widget>[
-          const IconAndDetail(Icons.nordic_walking_outlined, 'step counter'),
+          Consumer<ApplicationState>(
+            builder: (context,appState,_) => StepFunc(loggedIn:appState.loggedIn)
+            ),
+          /*const IconAndDetail(Icons.nordic_walking_outlined, 'step counter'),
           Text(
                 _steps,
                 style: TextStyle(fontSize: 60),
-              ),
+              ),*/
           Consumer<ApplicationState>(
             builder: (context, appState, _) => AuthFunc(
                 loggedIn: appState.loggedIn,

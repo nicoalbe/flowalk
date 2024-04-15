@@ -17,7 +17,7 @@ class ApplicationState extends ChangeNotifier {
   bool _loggedIn = false;
   bool get loggedIn => _loggedIn;
 
-  StreamSubscription<QuerySnapshot>? _guestBookSubscription;
+  //StreamSubscription<QuerySnapshot>? _guestBookSubscription;
   //List<GuestBookMessage> _guestBookMessages = [];
   //List<GuestBookMessage> get guestBookMessages => _guestBookMessages;
 
@@ -29,10 +29,10 @@ class ApplicationState extends ChangeNotifier {
       EmailAuthProvider(),
     ]);
     
-    /*FirebaseAuth.instance.userChanges().listen((user) {
+    FirebaseAuth.instance.userChanges().listen((user) {
       if (user != null) {
         _loggedIn = true;
-        _guestBookSubscription = FirebaseFirestore.instance
+        /*_guestBookSubscription = FirebaseFirestore.instance
             .collection('guestbook')
             .orderBy('timestamp', descending: true)
             .snapshots()
@@ -47,16 +47,17 @@ class ApplicationState extends ChangeNotifier {
             );
           }
           notifyListeners();
-        });
+        });*/
+        notifyListeners();
       } else {
         _loggedIn = false;
-        _guestBookMessages = [];
-        _guestBookSubscription?.cancel();
+        /*_guestBookMessages = [];
+        _guestBookSubscription?.cancel();*/
       }
       notifyListeners();
     });
   }
-  Future<DocumentReference> addMessageToGuestBook(String message) {
+  /*Future<DocumentReference> addMessageToGuestBook(String message) {
     if (!_loggedIn) {
       throw Exception('Must be logged in');
     }
@@ -68,6 +69,6 @@ class ApplicationState extends ChangeNotifier {
       'timestamp': DateTime.now().millisecondsSinceEpoch,
       'name': FirebaseAuth.instance.currentUser!.displayName,
       'userId': FirebaseAuth.instance.currentUser!.uid,
-    });*/
-  }
+    });
+  }*/
 }

@@ -97,8 +97,6 @@ final _router = GoRouter(
   ],
 );
 
-
-
 class App extends StatelessWidget {
   const App({super.key});
 
