@@ -1,10 +1,13 @@
 import 'dart:async';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import 'src/widgets.dart';
 import 'package:pedometer/pedometer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 
 
@@ -16,6 +19,7 @@ class StepCounter extends StatefulWidget {
 class _StepCounterState extends State<StepCounter> {
   int _stepCount = 0; // Initialize _stepCount as an integer
   StreamSubscription<StepCount>? _subscription; // Ensure correct type
+  FirebaseFirestore db = FirebaseFirestore.instance;
 
   @override
   void initState() {
@@ -33,7 +37,7 @@ class _StepCounterState extends State<StepCounter> {
     _subscription = Pedometer.stepCountStream.listen(
       (StepCount stepCount) {
         setState(() {
-          _stepCount = stepCount.steps; // Convert to int
+          _stepCount = getTodaySteps(stepCount.steps); // Convert to int
         });
       },
       onError: (error) {
@@ -45,6 +49,58 @@ class _StepCounterState extends State<StepCounter> {
   void _stopListening() {
     _subscription?.cancel();
   }
+
+  int getTodaySteps(int stepCount){
+    User? user = FirebaseAuth.instance.currentUser;
+    String? userId = user?.uid;
+
+    DateTime today=DateTime.now();
+    String dateString = '${today.day}-${today.month}-${today.year}';
+
+    int stepsPedo=stepCount;
+    int stepsDb=0;
+
+    addOrUpdateSteps(userId!,dateString,stepsPedo);
+
+    int steps=stepsPedo;
+    return steps;
+  }
+
+  Future<int> addOrUpdateSteps(String userId, String dateString, int stepsPedo) async {
+    CollectionReference stepsCollection = FirebaseFirestore.instance.collection("steps");
+
+    try {
+      QuerySnapshot querySnapshot = await stepsCollection
+          .where("user", isEqualTo: userId)
+          .where("date", isEqualTo: dateString)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // Document exists, update it
+        String docId = querySnapshot.docs.first.id;
+        int stepsDb = querySnapshot.docs.first['steps'];
+
+        // Update document
+        await stepsCollection.doc(docId).update({"steps": stepsPedo});
+
+        print("Document updated successfully");
+      } else {
+        // Document does not exist, add new document
+        await stepsCollection.add({
+          "user": userId,
+          "steps": stepsPedo,
+          "date": dateString,
+        });
+
+        print('Document added successfully');
+      }
+
+      return stepsPedo;
+    } catch (error) {
+      print("Error retrieving or updating document: $error");
+      return -1; // Return an error code or handle the error accordingly
+    }
+}
 
   @override
   Widget build(BuildContext context) {
