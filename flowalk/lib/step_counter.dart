@@ -35,9 +35,10 @@ class _StepCounterState extends State<StepCounter> {
 
   void _startListening() {
     _subscription = Pedometer.stepCountStream.listen(
-      (StepCount stepCount) {
+      (StepCount stepCount) async {
+        int todaySteps = await getTodaySteps(stepCount.steps);
         setState(() {
-          _stepCount = getTodaySteps(stepCount.steps); // Convert to int
+          _stepCount = todaySteps;
         });
       },
       onError: (error) {
@@ -46,24 +47,46 @@ class _StepCounterState extends State<StepCounter> {
     );
   }
 
+
   void _stopListening() {
     _subscription?.cancel();
   }
 
-  int getTodaySteps(int stepCount){
+  Future<int> getTodaySteps(int stepCount) async {
     User? user = FirebaseAuth.instance.currentUser;
     String? userId = user?.uid;
 
     DateTime today=DateTime.now();
     String dateString = '${today.day}-${today.month}-${today.year}';
 
-    int stepsPedo=stepCount;
-    int stepsDb=0;
-
-    addOrUpdateSteps(userId!,dateString,stepsPedo);
-
-    int steps=stepsPedo;
+    int steps=stepCount;
+    int stepStart= await readStepsStart(userId ?? '', dateString)??0;
+    steps=stepCount-stepStart;
     return steps;
+  }
+
+  Future<int?> readStepsStart(String userId, String dateString) async {
+    CollectionReference stepsCollection = FirebaseFirestore.instance.collection("steps");
+
+    try {
+      QuerySnapshot querySnapshot = await stepsCollection
+          .where("user", isEqualTo: userId)
+          .where("date", isEqualTo: dateString)
+          .get();
+
+      if (querySnapshot.docs.isNotEmpty) {
+        // Document exists, retrieve the value of the "steps_start" field
+        int stepsStart = querySnapshot.docs.first['steps_start'];
+        return stepsStart;
+      } else {
+        // Document does not exist
+        print("Document not found");
+        return null;
+      }
+    } catch (error) {
+      print("Error retrieving document: $error");
+      return null;
+    }
   }
 
   Future<int> addOrUpdateSteps(String userId, String dateString, int stepsPedo) async {
