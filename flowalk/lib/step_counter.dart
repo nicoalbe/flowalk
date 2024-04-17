@@ -17,7 +17,7 @@ class StepCounter extends StatefulWidget {
 }
 
 class _StepCounterState extends State<StepCounter> {
-  int _stepCount = 0; // Initialize _stepCount as an integer
+  int _stepCount = 7; // Initialize _stepCount as an integer
   StreamSubscription<StepCount>? _subscription; // Ensure correct type
   FirebaseFirestore db = FirebaseFirestore.instance;
 
@@ -34,18 +34,19 @@ class _StepCounterState extends State<StepCounter> {
   }
 
   void _startListening() {
-    _subscription = Pedometer.stepCountStream.listen(
-      (StepCount stepCount) async {
-        int todaySteps = await getTodaySteps(stepCount.steps);
-        setState(() {
-          _stepCount = todaySteps;
-        });
-      },
-      onError: (error) {
-        print('Pedometer error: $error');
-      },
-    );
-  }
+  _subscription = Pedometer.stepCountStream.listen(
+    (StepCount stepCount) async {
+      int todaySteps = await getTodaySteps(stepCount.steps);
+      setState(() {
+        _stepCount = todaySteps;
+      });
+    },
+    onError: (error) {
+      print('Pedometer error: $error');
+    },
+  );
+}
+
 
 
   void _stopListening() {
@@ -58,10 +59,13 @@ class _StepCounterState extends State<StepCounter> {
 
     DateTime today=DateTime.now();
     String dateString = '${today.day}-${today.month}-${today.year}';
+    
+    updateStepsStart();
 
     int steps=stepCount;
     int stepStart= await readStepsStart(userId ?? '', dateString)??0;
     steps=stepCount-stepStart;
+    print(steps);
     return steps;
   }
 
@@ -77,6 +81,7 @@ class _StepCounterState extends State<StepCounter> {
       if (querySnapshot.docs.isNotEmpty) {
         // Document exists, retrieve the value of the "steps_start" field
         int stepsStart = querySnapshot.docs.first['steps_start'];
+        print('okk');
         return stepsStart;
       } else {
         // Document does not exist
@@ -85,6 +90,76 @@ class _StepCounterState extends State<StepCounter> {
       }
     } catch (error) {
       print("Error retrieving document: $error");
+      return null;
+    }
+  }
+
+  void updateStepsStart() async {
+  // Get the current user
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    print('User not logged in');
+    return;
+  }
+
+  // Get the current step count
+  int? currentStepCount = await getCurrentStepCount();
+  if (currentStepCount == null) {
+    print('Error retrieving current step count');
+    return;
+  }
+
+  // Get the current date
+  DateTime now = DateTime.now();
+  String dateString = '${now.day}-${now.month}-${now.year}';
+
+  // Check if a document with the same user and date exists
+  CollectionReference stepsCollection =
+      FirebaseFirestore.instance.collection('steps');
+  QuerySnapshot querySnapshot = await stepsCollection
+      .where('user', isEqualTo: user.uid)
+      .where('date', isEqualTo: dateString)
+      .get();
+
+  if (querySnapshot.docs.isNotEmpty) {
+    // Document already exists, do not add a new one
+    print('Document already exists for user $user and date $dateString');
+    return;
+  }
+
+  // Document does not exist, add a new one
+  try {
+    await stepsCollection.add({
+      'user': user.uid,
+      'date': dateString,
+      'steps_start': currentStepCount,
+    });
+    print('Document created successfully');
+  } catch (error) {
+    print('Error creating document: $error');
+  }
+}
+
+
+  Future<int?> getCurrentStepCount() async {
+    try {
+      // Create a temporary stream subscription to get the current step count
+      StreamSubscription<StepCount>? subscription =
+          Pedometer.stepCountStream.listen(null);
+
+      // Wait for a short duration to allow the pedometer to provide an initial reading
+      await Future.delayed(Duration(seconds: 1));
+
+      // Get the current step count
+      int? stepCount;
+      await subscription?.cancel(); // Cancel the subscription immediately after getting the count
+      await Pedometer.stepCountStream.first.then((event) {
+        stepCount = event.steps;
+      });
+
+      return stepCount;
+    } catch (e) {
+      print('Error retrieving step count: $e');
       return null;
     }
   }
