@@ -1,121 +1,222 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:pedometer/pedometer.dart';
 import 'dart:async';
+import 'package:firebase_ui_auth/firebase_ui_auth.dart';
+import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';     
+import 'package:google_fonts/google_fonts.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:pedometer/pedometer.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+import 'app_state.dart';
+import 'homepage.dart';
 
 String formatDate(DateTime d) {
   return d.toString().substring(0, 19);
 }
+/*
+void callbackDispatcher() async {
+  // Get the current user
+  await Future.delayed(Duration(seconds: 1));
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    print('User not logged in');
+    return;
+  }
 
-void main() {
-  runApp(MyApp());
+  // Get the current step count
+  int? currentStepCount = await getCurrentStepCount();
+  if (currentStepCount == null) {
+    print('Error retrieving current step count');
+    return;
+  }
+
+  // Get the current date
+  DateTime now = DateTime.now();
+  String dateString = '${now.day}-${now.month}-${now.year}';
+
+  // Check if a document with the same user and date exists
+  CollectionReference stepsCollection =
+      FirebaseFirestore.instance.collection('steps');
+  QuerySnapshot querySnapshot = await stepsCollection
+      .where('user', isEqualTo: user.uid)
+      .where('date', isEqualTo: dateString)
+      .get();
+
+  if (querySnapshot.docs.isNotEmpty) {
+    // Document already exists, do not add a new one
+    print('Document already exists for user $user and date $dateString');
+    return;
+  }
+
+  // Document does not exist, add a new one
+  try {
+    await stepsCollection.add({
+      'user': user.uid,
+      'date': dateString,
+      'steps_start': currentStepCount,
+    });
+    print('Document created successfully');
+  } catch (error) {
+    print('Error creating document: $error');
+  }
 }
 
-class MyApp extends StatefulWidget {
-  @override
-  _MyAppState createState() => _MyAppState();
+
+Future<int?> getCurrentStepCount() async {
+  try {
+    // Create a temporary stream subscription to get the current step count
+    StreamSubscription<StepCount>? subscription =
+        Pedometer.stepCountStream.listen(null);
+
+    // Wait for a short duration to allow the pedometer to provide an initial reading
+    await Future.delayed(Duration(seconds: 1));
+
+    // Get the current step count
+    int? stepCount;
+    await subscription?.cancel(); // Cancel the subscription immediately after getting the count
+    await Pedometer.stepCountStream.first.then((event) {
+      stepCount = event.steps;
+    });
+
+    return stepCount;
+  } catch (e) {
+    print('Error retrieving step count: $e');
+    return null;
+  }
+}
+*/
+int calculateInitialDelay() {
+  DateTime now = DateTime.now();
+  DateTime midnight = DateTime(now.year, now.month, now.day + 1); // Next midnight
+  Duration delay = midnight.difference(now); // Time until midnight
+  return delay.inSeconds;
 }
 
-class _MyAppState extends State<MyApp> {
-  late Stream<StepCount> _stepCountStream;
-  late Stream<PedestrianStatus> _pedestrianStatusStream;
-  String _status = '?', _steps = '?';
-
-  @override
-  void initState() {
-    super.initState();
-    initPlatformState();
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+ /* try {
+    await Firebase.initializeApp();
+  } catch (e) {
+    print('Error initializing Firebase: $e');
+    // Handle the error or return to prevent further execution
+    return;
   }
 
-  void onStepCount(StepCount event) {
-    print(event);
-    setState(() {
-      _steps = event.steps.toString();
-    });
-  }
+  Workmanager().initialize(callbackDispatcher);
 
-  void onPedestrianStatusChanged(PedestrianStatus event) {
-    print(event);
-    setState(() {
-      _status = event.status;
-    });
-  }
+  // Schedule the task to run every 30 minutes
+  Workmanager().registerPeriodicTask(
+    'thirtyMinutesTask', // Unique name for the task
+    'thirtyMinutesTask', // Task identifier
+    frequency: Duration(minutes: 30), // Repeat every 30 minutes
+  );
+  */
 
-  void onPedestrianStatusError(error) {
-    print('onPedestrianStatusError: $error');
-    setState(() {
-      _status = 'Pedestrian Status not available';
-    });
-    print(_status);
-  }
+  runApp(ChangeNotifierProvider(
+    create: (context) => ApplicationState(),
+    builder: ((context, child) => const App()),
+  ));
+}
 
-  void onStepCountError(error) {
-    print('onStepCountError: $error');
-    setState(() {
-      _steps = 'Step Count not available';
-    });
-  }
+final _router = GoRouter(
+  routes: [
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const HomePage(),
+      routes: [
+        GoRoute(
+          path: 'sign-in',
+          builder: (context, state) {
+            return SignInScreen(
+              actions: [
+                ForgotPasswordAction(((context, email) {
+                  final uri = Uri(
+                    path: '/sign-in/forgot-password',
+                    queryParameters: <String, String?>{
+                      'email': email,
+                    },
+                  );
+                  context.push(uri.toString());
+                })),
+                AuthStateChangeAction(((context, state) {
+                  final user = switch (state) {
+                    SignedIn state => state.user,
+                    UserCreated state => state.credential.user,
+                    _ => null
+                  };
+                  if (user == null) {
+                    return;
+                  }
+                  if (state is UserCreated) {
+                    user.updateDisplayName(user.email!.split('@')[0]);
+                  }
+                  if (!user.emailVerified) {
+                    user.sendEmailVerification();
+                    const snackBar = SnackBar(
+                        content: Text(
+                            'Please check your email to verify your email address'));
+                    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+                  }
+                  context.pushReplacement('/');
+                })),
+              ],
+            );
+          },
+          routes: [
+            GoRoute(
+              path: 'forgot-password',
+              builder: (context, state) {
+                final arguments = state.uri.queryParameters;
+                return ForgotPasswordScreen(
+                  email: arguments['email'],
+                  headerMaxExtent: 200,
+                );
+              },
+            ),
+          ],
+        ),
+        GoRoute(
+          path: 'profile',
+          builder: (context, state) {
+            return ProfileScreen(
+              providers: const [],
+              actions: [
+                SignedOutAction((context) {
+                  context.pushReplacement('/');
+                }),
+              ],
+            );
+          },
+        ),
+      ],
+    ),
+  ],
+);
 
-  void initPlatformState() {
-    _pedestrianStatusStream = Pedometer.pedestrianStatusStream;
-    _pedestrianStatusStream
-        .listen(onPedestrianStatusChanged)
-        .onError(onPedestrianStatusError);
-
-    _stepCountStream = Pedometer.stepCountStream;
-    _stepCountStream.listen(onStepCount).onError(onStepCountError);
-
-    if (!mounted) return;
-  }
+class App extends StatelessWidget {
+  const App({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Pedometer Example'),
+    return MaterialApp.router(
+      title: 'Flowalk',
+      theme: ThemeData(
+        buttonTheme: Theme.of(context).buttonTheme.copyWith(
+              highlightColor: Colors.deepPurple,
+            ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        textTheme: GoogleFonts.robotoTextTheme(
+          Theme.of(context).textTheme,
         ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Text(
-                'Steps Taken by me',
-                style: TextStyle(fontSize: 30),
-              ),
-              Text(
-                _steps,
-                style: TextStyle(fontSize: 60),
-              ),
-              Divider(
-                height: 100,
-                thickness: 0,
-                color: Colors.white,
-              ),
-              Text(
-                'Pedestrian Status',
-                style: TextStyle(fontSize: 30),
-              ),
-              Icon(
-                _status == 'walking'
-                    ? Icons.directions_walk
-                    : _status == 'stopped'
-                        ? Icons.accessibility_new
-                        : Icons.error,
-                size: 100,
-              ),
-              Center(
-                child: Text(
-                  _status,
-                  style: _status == 'walking' || _status == 'stopped'
-                      ? TextStyle(fontSize: 30)
-                      : TextStyle(fontSize: 20, color: Colors.red),
-                ),
-              )
-            ],
-          ),
-        ),
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        useMaterial3: true,
       ),
+      routerConfig: _router,
     );
   }
 }
