@@ -17,7 +17,7 @@ class StepCounter extends StatefulWidget {
 }
 
 class _StepCounterState extends State<StepCounter> {
-  int _stepCount = 7; // Initialize _stepCount as an integer
+  int _stepCount = -1; // Initialize _stepCount as an integer
   StreamSubscription<StepCount>? _subscription; // Ensure correct type
   FirebaseFirestore db = FirebaseFirestore.instance;
 
@@ -219,8 +219,7 @@ class _StepCounterState extends State<StepCounter> {
   }
 }
 
-
-class StepFunc extends StatelessWidget {
+class StepFunc extends StatefulWidget {
   const StepFunc({
     super.key,
     required this.loggedIn,
@@ -229,27 +228,26 @@ class StepFunc extends StatelessWidget {
   final bool loggedIn;
 
   @override
+  State<StepFunc> createState() => _StepFuncState();
+}
+
+class _StepFuncState extends State<StepFunc> {
+  @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        /*Padding(
-          padding: const EdgeInsets.only(left: 24, bottom: 8),
-          child: StyledButton(
-              onPressed: () {
-                !loggedIn ? context.push('/sign-in') : const Text('Logout');
-              },
-              child: !loggedIn ? const Text('pls login') : const Text('Logout')),
-        ),*/
         Visibility(
-          visible: loggedIn,
+          visible: widget.loggedIn,
           child: Padding(
             padding: const EdgeInsets.only(left: 24, bottom: 8),
             child: StepCounter(),
           ),
-        )
+        ),
+        Visibility(
+          visible: !widget.loggedIn,
+          child: const Text("pls login"),
+        ),
       ],
     );
   }
 }
-
-

@@ -17,78 +17,7 @@ import 'homepage.dart';
 String formatDate(DateTime d) {
   return d.toString().substring(0, 19);
 }
-/*
-void callbackDispatcher() async {
-  // Get the current user
-  await Future.delayed(Duration(seconds: 1));
-  User? user = FirebaseAuth.instance.currentUser;
-  if (user == null) {
-    print('User not logged in');
-    return;
-  }
 
-  // Get the current step count
-  int? currentStepCount = await getCurrentStepCount();
-  if (currentStepCount == null) {
-    print('Error retrieving current step count');
-    return;
-  }
-
-  // Get the current date
-  DateTime now = DateTime.now();
-  String dateString = '${now.day}-${now.month}-${now.year}';
-
-  // Check if a document with the same user and date exists
-  CollectionReference stepsCollection =
-      FirebaseFirestore.instance.collection('steps');
-  QuerySnapshot querySnapshot = await stepsCollection
-      .where('user', isEqualTo: user.uid)
-      .where('date', isEqualTo: dateString)
-      .get();
-
-  if (querySnapshot.docs.isNotEmpty) {
-    // Document already exists, do not add a new one
-    print('Document already exists for user $user and date $dateString');
-    return;
-  }
-
-  // Document does not exist, add a new one
-  try {
-    await stepsCollection.add({
-      'user': user.uid,
-      'date': dateString,
-      'steps_start': currentStepCount,
-    });
-    print('Document created successfully');
-  } catch (error) {
-    print('Error creating document: $error');
-  }
-}
-
-
-Future<int?> getCurrentStepCount() async {
-  try {
-    // Create a temporary stream subscription to get the current step count
-    StreamSubscription<StepCount>? subscription =
-        Pedometer.stepCountStream.listen(null);
-
-    // Wait for a short duration to allow the pedometer to provide an initial reading
-    await Future.delayed(Duration(seconds: 1));
-
-    // Get the current step count
-    int? stepCount;
-    await subscription?.cancel(); // Cancel the subscription immediately after getting the count
-    await Pedometer.stepCountStream.first.then((event) {
-      stepCount = event.steps;
-    });
-
-    return stepCount;
-  } catch (e) {
-    print('Error retrieving step count: $e');
-    return null;
-  }
-}
-*/
 int calculateInitialDelay() {
   DateTime now = DateTime.now();
   DateTime midnight = DateTime(now.year, now.month, now.day + 1); // Next midnight
@@ -98,24 +27,6 @@ int calculateInitialDelay() {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
- /* try {
-    await Firebase.initializeApp();
-  } catch (e) {
-    print('Error initializing Firebase: $e');
-    // Handle the error or return to prevent further execution
-    return;
-  }
-
-  Workmanager().initialize(callbackDispatcher);
-
-  // Schedule the task to run every 30 minutes
-  Workmanager().registerPeriodicTask(
-    'thirtyMinutesTask', // Unique name for the task
-    'thirtyMinutesTask', // Task identifier
-    frequency: Duration(minutes: 30), // Repeat every 30 minutes
-  );
-  */
 
   runApp(ChangeNotifierProvider(
     create: (context) => ApplicationState(),
