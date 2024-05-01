@@ -2,12 +2,8 @@ import 'dart:async';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
-
-import 'src/widgets.dart';
 import 'package:pedometer/pedometer.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:intl/date_symbol_data_local.dart';
 
 
 
@@ -95,51 +91,100 @@ class _StepCounterState extends State<StepCounter> {
   }
 
   void updateStepsStart() async {
-  // Get the current user
-  User? user = FirebaseAuth.instance.currentUser;
-  if (user == null) {
-    print('User not logged in');
-    return;
+    // Get the current user
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print('User not logged in');
+      return;
+    }
+
+    // Get the current step count
+    int? currentStepCount = await getCurrentStepCount();
+    if (currentStepCount == null) {
+      print('Error retrieving current step count');
+      return;
+    }
+
+    // Get the current date
+    DateTime now = DateTime.now();
+    String dateString = '${now.day}-${now.month}-${now.year}';
+
+    // Check if a document with the same user and date exists
+    CollectionReference stepsCollection =
+        FirebaseFirestore.instance.collection('steps');
+    QuerySnapshot querySnapshot = await stepsCollection
+        .where('user', isEqualTo: user.uid)
+        .where('date', isEqualTo: dateString)
+        .get();
+
+    if (querySnapshot.docs.isNotEmpty) {
+      // Document already exists, do not add a new one
+      print('Document already exists for user $user and date $dateString');
+      return;
+    }
+
+    // Document does not exist, add a new one
+    try {
+      await stepsCollection.add({
+        'user': user.uid,
+        'date': dateString,
+        'steps_start': currentStepCount,
+      });
+      print('Document created successfully');
+
+      updateStepsForYesterday();
+    } catch (error) {
+      print('Error creating document: $error');
+    }
   }
 
-  // Get the current step count
-  int? currentStepCount = await getCurrentStepCount();
-  if (currentStepCount == null) {
-    print('Error retrieving current step count');
-    return;
-  }
+  Future<void> updateStepsForYesterday() async {
+    // Get the current user
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print('User not logged in');
+      return;
+    }
 
-  // Get the current date
-  DateTime now = DateTime.now();
-  String dateString = '${now.day}-${now.month}-${now.year}';
+    // Get yesterday's date
+    DateTime yesterday = DateTime.now().subtract(Duration(days: 1));
+    String yesterdayDateString = '${yesterday.day}-${yesterday.month}-${yesterday.year}';
 
-  // Check if a document with the same user and date exists
-  CollectionReference stepsCollection =
-      FirebaseFirestore.instance.collection('steps');
-  QuerySnapshot querySnapshot = await stepsCollection
+    // Query Firestore to get steps_start for yesterday
+    CollectionReference stepsCollection = FirebaseFirestore.instance.collection('steps');
+    QuerySnapshot querySnapshot = await stepsCollection
       .where('user', isEqualTo: user.uid)
-      .where('date', isEqualTo: dateString)
+      .where('date', isEqualTo: yesterdayDateString)
       .get();
 
-  if (querySnapshot.docs.isNotEmpty) {
-    // Document already exists, do not add a new one
-    print('Document already exists for user $user and date $dateString');
-    return;
-  }
+    int yesterdaySteps = 0;
+    if (querySnapshot.docs.isNotEmpty) {
+      // Document exists, retrieve the value of the "steps_start" field
+      yesterdaySteps = querySnapshot.docs.first['steps_start'];
+    } else {
+      print('Document not found for user $user and date $yesterdayDateString');
+    }
 
-  // Document does not exist, add a new one
-  try {
-    await stepsCollection.add({
-      'user': user.uid,
-      'date': dateString,
-      'steps_start': currentStepCount,
-    });
-    print('Document created successfully');
-  } catch (error) {
-    print('Error creating document: $error');
-  }
-}
+    // Get the current step count
+    int? currentStepCount = await getCurrentStepCount();
+    if (currentStepCount == null) {
+      print('Error retrieving current step count');
+      return;
+    }
 
+    CollectionReference gardenCollection = FirebaseFirestore.instance.collection('garden');
+    // Update steps count for yesterday
+    try {
+      await gardenCollection.add({
+        'user': user.uid,
+        'date': yesterdayDateString,
+        'steps': currentStepCount - yesterdaySteps,
+      });
+      print('Steps updated successfully for yesterday');
+    } catch (error) {
+      print('Error updating steps for yesterday: $error');
+    }
+  }
 
   Future<int?> getCurrentStepCount() async {
     try {
@@ -163,42 +208,6 @@ class _StepCounterState extends State<StepCounter> {
       return null;
     }
   }
-
-  Future<int> addOrUpdateSteps(String userId, String dateString, int stepsPedo) async {
-    CollectionReference stepsCollection = FirebaseFirestore.instance.collection("steps");
-
-    try {
-      QuerySnapshot querySnapshot = await stepsCollection
-          .where("user", isEqualTo: userId)
-          .where("date", isEqualTo: dateString)
-          .get();
-
-      if (querySnapshot.docs.isNotEmpty) {
-        // Document exists, update it
-        String docId = querySnapshot.docs.first.id;
-        int stepsDb = querySnapshot.docs.first['steps'];
-
-        // Update document
-        await stepsCollection.doc(docId).update({"steps": stepsPedo});
-
-        print("Document updated successfully");
-      } else {
-        // Document does not exist, add new document
-        await stepsCollection.add({
-          "user": userId,
-          "steps": stepsPedo,
-          "date": dateString,
-        });
-
-        print('Document added successfully');
-      }
-
-      return stepsPedo;
-    } catch (error) {
-      print("Error retrieving or updating document: $error");
-      return -1; // Return an error code or handle the error accordingly
-    }
-}
 
   @override
   Widget build(BuildContext context) {

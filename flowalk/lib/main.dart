@@ -1,15 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:async';
 import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';     
 import 'package:google_fonts/google_fonts.dart';
-import 'package:workmanager/workmanager.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:pedometer/pedometer.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 
 import 'app_state.dart';
 import 'homepage.dart';

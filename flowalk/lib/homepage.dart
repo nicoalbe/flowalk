@@ -1,21 +1,10 @@
 // Copyright 2022 The Flutter Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
-
-import 'package:firebase_auth/firebase_auth.dart'
-    hide EmailAuthProvider, PhoneAuthProvider;
 import 'package:flowalk/setting.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-
-import 'package:pedometer/pedometer.dart';
-
-import 'app_state.dart';
-import 'src/authentication.dart';
-import 'src/widgets.dart';
-import 'step_counter.dart';
 import 'flower.dart';
-import 'setting.dart';
+import 'garden.dart';
 //import 'guest_book.dart';
 
 class HomePage extends StatefulWidget {
@@ -26,13 +15,11 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  late Stream<StepCount> _stepCountStream;
-  String _steps = '?';
 
   int _selectedIndex = 1;
 
   static List<Widget> _pages = <Widget>[
-    Container(color: Color.fromARGB(255, 17, 117, 41), child: Center(child: Text('Page 1'))),
+    GardenPage(),
     FlowerPage(),
     SettingPage(),
   ];
