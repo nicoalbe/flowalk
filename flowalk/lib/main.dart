@@ -8,17 +8,6 @@ import 'package:google_fonts/google_fonts.dart';
 import 'app_state.dart';
 import 'homepage.dart';
 
-String formatDate(DateTime d) {
-  return d.toString().substring(0, 19);
-}
-
-int calculateInitialDelay() {
-  DateTime now = DateTime.now();
-  DateTime midnight = DateTime(now.year, now.month, now.day + 1); // Next midnight
-  Duration delay = midnight.difference(now); // Time until midnight
-  return delay.inSeconds;
-}
-
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(); 

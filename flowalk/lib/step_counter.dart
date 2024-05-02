@@ -13,16 +13,20 @@ class StepCounter extends StatefulWidget {
 }
 
 class _StepCounterState extends State<StepCounter> {
-  int _stepCount = -1; // Initialize _stepCount as an integer
+  int _stepCount = -1; 
   int _stepGoal = 0;
-  StreamSubscription<StepCount>? _subscription; // Ensure correct type
+  StreamSubscription<StepCount>? _subscription;
   FirebaseFirestore db = FirebaseFirestore.instance;
+  late Timer _timer;
 
   @override
   void initState() {
     super.initState();
     _startListening();
     _fetchStepGoal();
+    _timer = Timer.periodic(Duration(seconds: 10), (Timer t) {
+      _handleRefresh();
+    });
   }
 
   @override
@@ -32,20 +36,23 @@ class _StepCounterState extends State<StepCounter> {
   }
 
   void _startListening() {
-  _subscription = Pedometer.stepCountStream.listen(
-    (StepCount stepCount) async {
-      int todaySteps = await getTodaySteps(stepCount.steps);
-      setState(() {
-        _stepCount = todaySteps;
-      });
-    },
-    onError: (error) {
-      print('Pedometer error: $error');
-    },
-  );
-}
+    _subscription = Pedometer.stepCountStream.listen(
+      (StepCount stepCount) async {
+        int todaySteps = await getTodaySteps(stepCount.steps);
+        setState(() {
+          _stepCount = todaySteps;
+        });
+      },
+      onError: (error) {
+        print('Pedometer error: $error');
+      },
+    );
+  }
 
-
+  Future<void> _handleRefresh() async {
+    _startListening();
+    await _fetchStepGoal();
+  }
 
   void _stopListening() {
     _subscription?.cancel();
@@ -85,7 +92,6 @@ class _StepCounterState extends State<StepCounter> {
     int steps=stepCount;
     int stepStart= await readStepsStart(userId ?? '', dateString)??0;
     steps=stepCount-stepStart;
-    print(steps);
     return steps;
   }
 
@@ -99,12 +105,9 @@ class _StepCounterState extends State<StepCounter> {
           .get();
 
       if (querySnapshot.docs.isNotEmpty) {
-        // Document exists, retrieve the value of the "steps_start" field
         int stepsStart = querySnapshot.docs.first['steps_start'];
-        print('okk');
         return stepsStart;
       } else {
-        // Document does not exist
         print("Document not found");
         return null;
       }
@@ -173,7 +176,6 @@ class _StepCounterState extends State<StepCounter> {
     // Get yesterday's date
     DateTime yesterday = DateTime.now().subtract(Duration(days: 1));
     String yesterdayDateString = '${yesterday.day}-${yesterday.month}-${yesterday.year}';
-    //TODOString yesterdayDateString = '${yesterday.year}-${yesterday.month}-${yesterday.day}';
 
     // Query Firestore to get steps_start for yesterday
     CollectionReference stepsCollection = FirebaseFirestore.instance.collection('steps');

@@ -1,11 +1,7 @@
-// Copyright 2022 The Flutter Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
 import 'package:flowalk/setting.dart';
 import 'package:flutter/material.dart';
 import 'flower.dart';
 import 'garden.dart';
-//import 'guest_book.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({Key? key});
