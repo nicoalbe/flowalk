@@ -149,6 +149,7 @@ class _StepCounterState extends State<StepCounter> {
     // Get yesterday's date
     DateTime yesterday = DateTime.now().subtract(Duration(days: 1));
     String yesterdayDateString = '${yesterday.day}-${yesterday.month}-${yesterday.year}';
+    //TODOString yesterdayDateString = '${yesterday.year}-${yesterday.month}-${yesterday.day}';
 
     // Query Firestore to get steps_start for yesterday
     CollectionReference stepsCollection = FirebaseFirestore.instance.collection('steps');
