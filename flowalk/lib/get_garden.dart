@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
-
 import 'package:intl/intl.dart'; 
-
-
 
 class Garden extends StatefulWidget {
   @override
@@ -24,28 +21,32 @@ class _GardenState extends State<Garden> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Garden'),
-      ),
-      body: Column(
-        children: [
-          Text(
-            'Garden:',
-            style: TextStyle(fontSize: 24),
-          ),
-          SizedBox(height: 10),
-          Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: 12,
-              itemBuilder: (context, index) {
-                final month = DateTime(_currentMonth.year, _currentMonth.month - index, 1);
-                return MonthItem(month: month);
-              },
+    return SizedBox(
+      width: MediaQuery.of(context).size.width, // Set width to match screen width
+      height: MediaQuery.of(context).size.height, // Set height to match screen height
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Garden'),
+        ),
+        body: Column(
+          children: [
+            Text(
+              'Garden:',
+              style: TextStyle(fontSize: 24),
             ),
-          ),
-        ],
+            SizedBox(height: 10),
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: 1,
+                itemBuilder: (context, index) {
+                  final month = DateTime(_currentMonth.year, _currentMonth.month - index, 1);
+                  return MonthItem(month: month);
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -56,6 +57,7 @@ class _GardenState extends State<Garden> {
     super.dispose();
   }
 }
+
 
 class MonthItem extends StatelessWidget {
   final DateTime month;
@@ -74,36 +76,33 @@ class MonthItem extends StatelessWidget {
   }
 }
 
-class GardenFunc extends StatefulWidget {
+class GardenFunc extends StatelessWidget {
   const GardenFunc({
-    super.key,
+    Key? key,
     required this.loggedIn,
-  });
+  }) : super(key: key);
 
   final bool loggedIn;
 
   @override
-  State<GardenFunc> createState() => _GardenFunc();
-}
-
-class _GardenFunc extends State<GardenFunc> {
-  @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Visibility(
-          visible: widget.loggedIn,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 24, bottom: 8),
-            child: Garden(),
-            //child: const Text("garden"),
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Visibility(
+            visible: loggedIn,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Garden(),
+            ),
           ),
-        ),
-        Visibility(
-          visible: !widget.loggedIn,
-          child: const Text("pls login"),
-        ),
-      ],
+          Visibility(
+            visible: !loggedIn,
+            child: const Text("Please login"),
+          ),
+        ],
+      ),
     );
   }
 }

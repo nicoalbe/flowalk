@@ -197,7 +197,7 @@ class _StepCounterState extends State<StepCounter> {
 
       // Get the current step count
       int? stepCount;
-      await subscription?.cancel(); // Cancel the subscription immediately after getting the count
+      await subscription.cancel(); // Cancel the subscription immediately after getting the count
       await Pedometer.stepCountStream.first.then((event) {
         stepCount = event.steps;
       });

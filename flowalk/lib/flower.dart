@@ -2,18 +2,12 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
-import 'package:firebase_auth/firebase_auth.dart' 
-    hide EmailAuthProvider, PhoneAuthProvider;    
 import 'package:flutter/material.dart';           
 import 'package:provider/provider.dart';          
 
-import 'package:pedometer/pedometer.dart';
 
-import 'app_state.dart';                          
-import 'src/authentication.dart';                 
-import 'src/widgets.dart';
+import 'app_state.dart';
 import 'step_counter.dart';
-import 'homepage.dart';
 //import 'guest_book.dart';
 
 class FlowerPage extends StatefulWidget {
@@ -24,8 +18,6 @@ class FlowerPage extends StatefulWidget {
 }
 
 class _FlowerPageState extends State<FlowerPage> {
-  late Stream<StepCount> _stepCountStream;
-  String _steps = '?';
 
   @override
   Widget build(BuildContext context) {

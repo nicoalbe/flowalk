@@ -7,13 +7,9 @@ import 'package:firebase_auth/firebase_auth.dart'
 import 'package:flutter/material.dart';           
 import 'package:provider/provider.dart';          
 
-import 'package:pedometer/pedometer.dart';
 
 import 'app_state.dart';                          
-import 'src/authentication.dart';                 
-import 'src/widgets.dart';
-import 'step_counter.dart';
-import 'homepage.dart';
+import 'src/authentication.dart';
 //import 'guest_book.dart';
 
 class SettingPage extends StatefulWidget {
