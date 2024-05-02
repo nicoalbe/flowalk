@@ -14,6 +14,7 @@ class StepCounter extends StatefulWidget {
 
 class _StepCounterState extends State<StepCounter> {
   int _stepCount = -1; // Initialize _stepCount as an integer
+  int _stepGoal = 0;
   StreamSubscription<StepCount>? _subscription; // Ensure correct type
   FirebaseFirestore db = FirebaseFirestore.instance;
 
@@ -21,6 +22,7 @@ class _StepCounterState extends State<StepCounter> {
   void initState() {
     super.initState();
     _startListening();
+    _fetchStepGoal();
   }
 
   @override
@@ -48,7 +50,29 @@ class _StepCounterState extends State<StepCounter> {
   void _stopListening() {
     _subscription?.cancel();
   }
+  
+  Future<void> _fetchStepGoal() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      print('User not logged in');
+      return;
+    }
 
+    String userId = user.uid;
+    
+    try {
+      DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance.collection('goals').doc(userId).get();
+      if (documentSnapshot.exists) {
+        Map<String, dynamic> data = documentSnapshot.data() as Map<String, dynamic>;
+        setState(() {
+          _stepGoal = data['goal'] ?? 0;
+        });
+      }
+    } catch (error) {
+      print('Error fetching step goal: $error');
+    }
+  }
+  
   Future<int> getTodaySteps(int stepCount) async {
     User? user = FirebaseAuth.instance.currentUser;
     String? userId = user?.uid;
@@ -212,20 +236,42 @@ class _StepCounterState extends State<StepCounter> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: <Widget>[
-        Text(
-          'Step Count:',
-          style: TextStyle(fontSize: 24),
-        ),
-        SizedBox(height: 10),
-        Text(
-          '$_stepCount',
-          style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
+    String imagePath = 'assets/';
+    if (_stepCount == -1) {
+      // Display a loading indicator while step count is being fetched
+      return CircularProgressIndicator();
+    } else {
+      double percentage = _stepCount / _stepGoal;
+      if (percentage < 0.5) {
+        imagePath += '00pot.png';
+      } else if (percentage < 0.75) {
+        imagePath += '01bud.png';
+      } else if (percentage < 1) {
+        imagePath += '02small.png';
+      } else {
+        imagePath += '03flower.png';
+      }
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Text(
+            'Step Count:',
+            style: TextStyle(fontSize: 24),
+          ),
+          SizedBox(height: 10),
+          Text(
+            '$_stepCount',
+            style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+          ),
+          Image.asset(
+            imagePath,
+            width: 100,
+            height: 100,
+            fit: BoxFit.contain,
+          ),
+        ],
+      );
+    }
   }
 }
 
