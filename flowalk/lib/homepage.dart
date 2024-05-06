@@ -33,24 +33,36 @@ class _HomePageState extends State<HomePage> {
         index: _selectedIndex,
         children: _pages,
       ),
-      bottomNavigationBar: BottomNavigationBar(
+      bottomNavigationBar: Container(
+      decoration: BoxDecoration(
+        color: Color(0xFF32965D),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(20.0),
+          topRight: Radius.circular(20.0),
+        ),
+      ),
+      child: BottomNavigationBar(
+        backgroundColor: Colors.transparent, // Set the background color of the BottomNavigationBar to transparent
+        selectedItemColor: Colors.white,
+        unselectedItemColor: Colors.white.withOpacity(0.5),
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: 'Page 1',
+            icon: Icon(Icons.calendar_month),
+            label: 'Garden',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.business),
-            label: 'Page 2',
+            icon: Icon(Icons.directions_walk),
+            label: 'Daily Steps',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.school),
-            label: 'Page 3',
+            icon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
       ),
+    ),
     );
   }
 }
