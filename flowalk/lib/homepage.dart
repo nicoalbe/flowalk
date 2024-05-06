@@ -1,105 +1,55 @@
-// Copyright 2022 The Flutter Authors. All rights reserved.
-// Use of this source code is governed by a BSD-style license that can be
-// found in the LICENSE file.
-
-import 'package:firebase_auth/firebase_auth.dart' 
-    hide EmailAuthProvider, PhoneAuthProvider;    
-import 'package:flutter/material.dart';           
-import 'package:provider/provider.dart';          
-
-import 'package:pedometer/pedometer.dart';
-
-import 'app_state.dart';                          
-import 'src/authentication.dart';                 
-import 'src/widgets.dart';
-import 'step_counter.dart';
-//import 'guest_book.dart';
+import 'package:flowalk/setting.dart';
+import 'package:flutter/material.dart';
+import 'flower.dart';
+import 'garden.dart';
 
 class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+  const HomePage({Key? key});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  late Stream<StepCount> _stepCountStream;
-  String _steps = '?';
 
-  /*@override
-    void initState() {
-      super.initState();
-      initPlatformState();
-    }
+  int _selectedIndex = 1;
 
-  void onStepCount(StepCount event) {
-    print(event);
+  static List<Widget> _pages = <Widget>[
+    GardenPage(),
+    FlowerPage(),
+    SettingPage(),
+  ];
+
+  void _onItemTapped(int index) {
     setState(() {
-      _steps = event.steps.toString();
+      _selectedIndex = index;
     });
   }
-
-  void onStepCountError(error) {
-    print('onStepCountError: $error');
-    setState(() {
-      _steps = 'Step Count not available';
-    });
-  }
-
-  void initPlatformState() {
-
-    _stepCountStream = Pedometer.stepCountStream;
-    _stepCountStream.listen(onStepCount).onError(onStepCountError);
-
-    if (!mounted) return;
-  }*/
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Flowalk'),
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: _pages,
       ),
-      body: ListView(
-        children: <Widget>[
-          Consumer<ApplicationState>(
-            builder: (context,appState,_) => StepFunc(loggedIn:appState.loggedIn)
-            ),
-          /*const IconAndDetail(Icons.nordic_walking_outlined, 'step counter'),
-          Text(
-                _steps,
-                style: TextStyle(fontSize: 60),
-              ),*/
-          Consumer<ApplicationState>(
-            builder: (context, appState, _) => AuthFunc(
-                loggedIn: appState.loggedIn,
-                signOut: () {
-                  FirebaseAuth.instance.signOut();
-                }),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Page 1',
           ),
-          const Divider(
-            height: 8,
-            thickness: 1,
-            indent: 8,
-            endIndent: 8,
-            color: Colors.grey,
+          BottomNavigationBarItem(
+            icon: Icon(Icons.business),
+            label: 'Page 2',
           ),
-          /*Consumer<ApplicationState>(
-            builder: (context, appState, _) => Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                if (appState.loggedIn) ...[
-                  const Header('Discussion'),
-                  GuestBook(
-                    addMessage: (message) =>
-                        appState.addMessageToGuestBook(message),
-                     messages: appState.guestBookMessages,
-                  ),
-                ],
-              ],
-            ),
-          ),*/
+          BottomNavigationBarItem(
+            icon: Icon(Icons.school),
+            label: 'Page 3',
+          ),
         ],
+        currentIndex: _selectedIndex,
+        onTap: _onItemTapped,
       ),
     );
   }
