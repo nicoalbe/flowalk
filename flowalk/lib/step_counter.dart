@@ -13,7 +13,7 @@ class StepCounter extends StatefulWidget {
 }
 
 class _StepCounterState extends State<StepCounter> {
-  int _stepCount = 8000; 
+  int _stepCount = 8000;
   int _stepGoal = 10000;
   /*StreamSubscription<StepCount>? _subscription;
   FirebaseFirestore db = FirebaseFirestore.instance;
@@ -256,19 +256,52 @@ class _StepCounterState extends State<StepCounter> {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Text(
-            'Step Count:',
-            style: TextStyle(fontSize: 24),
+          Center(
+            child: Text(
+            'Step Count',
+            style: TextStyle(
+              fontSize: 30,
+              shadows: [
+                Shadow(
+                  color: Colors.grey.withOpacity(0.5),
+                  blurRadius: 2,
+                  offset: Offset(2, 2),
+                ),
+              ],
+            ),
+          ),
           ),
           SizedBox(height: 10),
-          Text(
-            '$_stepCount',
-            style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+          Container(
+            width: 200,
+            height: 200,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.green.withOpacity(0.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.green.withOpacity(0.3),
+                  spreadRadius: 5,
+                  blurRadius: 7,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                '$_stepCount',
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
           Image.asset(
             imagePath,
-            width: 100,
-            height: 100,
+            width: 300,
+            height: 300,
             fit: BoxFit.contain,
           ),
         ],

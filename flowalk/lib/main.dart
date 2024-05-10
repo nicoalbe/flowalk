@@ -101,6 +101,7 @@ class App extends StatelessWidget {
     return MaterialApp.router(
       title: 'Flowalk',
       theme: ThemeData(
+        scaffoldBackgroundColor: Color.fromARGB(255, 220, 252, 200), // Set the background color of the Scaffold to yellow
         buttonTheme: Theme.of(context).buttonTheme.copyWith(
               highlightColor: Colors.deepPurple,
             ),
