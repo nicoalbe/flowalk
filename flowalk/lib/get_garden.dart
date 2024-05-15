@@ -206,7 +206,13 @@ class GardenFunc extends StatelessWidget {
           ),
           Visibility(
             visible: !loggedIn,
-            child: const Text("Please login"),
+            child: Container(
+              padding: EdgeInsets.symmetric(horizontal: 16.0), // Adjust padding as needed
+              child: const Text(
+                "Welcome to Flowalk! \nTo start using the application go to the Settings page and login or register.",
+                style: TextStyle(fontSize: 18),
+              ),
+            ),
           ),
         ],
       ),

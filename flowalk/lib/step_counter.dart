@@ -33,8 +33,8 @@ class _StepCounterState extends State<StepCounter> {
   void dispose() {
     super.dispose();
     _stopListening();
+    _timer.cancel();
   }
-
   void _startListening() {
     _subscription = Pedometer.stepCountStream.listen(
       (StepCount stepCount) async {
@@ -346,7 +346,15 @@ class _StepFuncState extends State<StepFunc> {
           ),
           Visibility(
             visible: !widget.loggedIn,
-            child: const Text("pls login"),
+            child: Flexible(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: const Text(
+                  "Welcome to Flowalk! \nTo start using the application go to the Settings page and login or register.",
+                  style: TextStyle(fontSize: 18),
+                ),
+              ),
+            ),
           ),
         ],
       ),

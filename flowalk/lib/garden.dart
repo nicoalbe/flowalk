@@ -22,13 +22,6 @@ class _GardenPageState extends State<GardenPage> {
           Consumer<ApplicationState>(
             builder: (context,appState,_) => GardenFunc(loggedIn:appState.loggedIn)
             ),
-          const Divider(
-            height: 8,
-            thickness: 1,
-            indent: 8,
-            endIndent: 8,
-            color: Colors.grey,
-          ),
         ],
       ),
     );
