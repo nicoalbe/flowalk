@@ -13,9 +13,9 @@ class StepCounter extends StatefulWidget {
 }
 
 class _StepCounterState extends State<StepCounter> {
-  int _stepCount = 8000;
+  int _stepCount = -1;
   int _stepGoal = 10000;
-  /*StreamSubscription<StepCount>? _subscription;
+  StreamSubscription<StepCount>? _subscription;
   FirebaseFirestore db = FirebaseFirestore.instance;
   late Timer _timer;
 
@@ -235,7 +235,7 @@ class _StepCounterState extends State<StepCounter> {
       return null;
     }
   }
-*/
+
   @override
   Widget build(BuildContext context) {
     String imagePath = 'assets/';
