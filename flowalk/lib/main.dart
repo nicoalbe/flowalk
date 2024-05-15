@@ -4,6 +4,7 @@ import 'package:firebase_ui_auth/firebase_ui_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';     
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter/widgets.dart';
 
 import 'app_state.dart';
 import 'homepage.dart';
@@ -93,19 +94,20 @@ final _router = GoRouter(
   ],
 );
 
+
 class App extends StatelessWidget {
-  const App({super.key});
+  const App({Key? key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
       title: 'Flowalk',
       theme: ThemeData(
-        scaffoldBackgroundColor: Color.fromARGB(255, 220, 252, 200), // Set the background color of the Scaffold to yellow
+        scaffoldBackgroundColor: Color.fromARGB(255, 220, 252, 200),
         buttonTheme: Theme.of(context).buttonTheme.copyWith(
-              highlightColor: Colors.deepPurple,
-            ),
-        colorScheme: ColorScheme.fromSeed(seedColor:  Color(0xFF32965D)),
+          highlightColor: Color.fromARGB(255, 50, 150, 93),
+        ),
+        colorScheme: ColorScheme.fromSeed(seedColor: Color(0xFF32965D)),
         textTheme: GoogleFonts.robotoTextTheme(
           Theme.of(context).textTheme,
         ),
@@ -114,6 +116,36 @@ class App extends StatelessWidget {
       ),
       routerConfig: _router,
       debugShowCheckedModeBanner: false,
+      builder: (context, router) {
+        return Builder(
+          builder: (BuildContext context) {
+            return Scaffold(
+              appBar: AppBar(
+                title: Container(
+                  alignment: Alignment.center,
+                  child: Text(
+                    'Flowalk', 
+                    style: TextStyle(
+                      fontSize: 24, 
+                      fontWeight: FontWeight.bold, 
+                      color: Color.fromARGB(255, 219, 255, 218), 
+                    ),
+                  ),
+                ), 
+                backgroundColor: Color(0xFF32965D),
+                shape: Border(
+                  bottom: BorderSide(
+                    color: Color.fromARGB(219, 188, 252, 216), // Adjust border color
+                    width: 2.0, // Adjust border width
+                  ),
+                ),
+              ),
+              body: router!,
+            );
+          },
+        );
+      },
     );
   }
 }
+

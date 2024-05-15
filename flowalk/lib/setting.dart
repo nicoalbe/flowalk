@@ -19,9 +19,6 @@ class _SettingPageState extends State<SettingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Flowalk'),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(

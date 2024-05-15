@@ -15,9 +15,6 @@ class _FlowerPageState extends State<FlowerPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Flowalk'),
-      ),
       body: ListView(
         children: <Widget>[
           Consumer<ApplicationState>(
