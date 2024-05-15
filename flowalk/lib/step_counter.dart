@@ -59,26 +59,37 @@ class _StepCounterState extends State<StepCounter> {
   }
   
   Future<void> _fetchStepGoal() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      print('User not logged in');
-      return;
-    }
-
-    String userId = user.uid;
-    
-    try {
-      DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance.collection('goals').doc(userId).get();
-      if (documentSnapshot.exists) {
-        Map<String, dynamic> data = documentSnapshot.data() as Map<String, dynamic>;
-        setState(() {
-          _stepGoal = data['goal'] ?? 0;
-        });
-      }
-    } catch (error) {
-      print('Error fetching step goal: $error');
-    }
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    print('User not logged in');
+    return;
   }
+
+  String userId = user.uid;
+
+  try {
+    DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance.collection('goals').doc(userId).get();
+    if (documentSnapshot.exists) {
+      // Document already exists, retrieve the goal
+      Map<String, dynamic> data = documentSnapshot.data() as Map<String, dynamic>;
+      setState(() {
+        _stepGoal = data['goal'] ?? 0;
+      });
+    } else {
+      // Document does not exist, create a new one with goal set to 10000
+      await FirebaseFirestore.instance.collection('goals').doc(userId).set({
+        'goal': 10000,
+        'user': userId,
+      });
+      setState(() {
+        _stepGoal = 10000;
+      });
+      print('Step goal document created successfully');
+    }
+  } catch (error) {
+    print('Error fetching/creating step goal: $error');
+  }
+}
   
   Future<int> getTodaySteps(int stepCount) async {
     User? user = FirebaseAuth.instance.currentUser;
