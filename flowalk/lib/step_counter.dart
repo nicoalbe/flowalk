@@ -336,20 +336,20 @@ class StepFunc extends StatefulWidget {
 class _StepFuncState extends State<StepFunc> {
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Visibility(
-          visible: widget.loggedIn,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 24, bottom: 8),
+    return Center(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Visibility(
+            visible: widget.loggedIn,
             child: StepCounter(),
           ),
-        ),
-        Visibility(
-          visible: !widget.loggedIn,
-          child: const Text("pls login"),
-        ),
-      ],
+          Visibility(
+            visible: !widget.loggedIn,
+            child: const Text("pls login"),
+          ),
+        ],
+      ),
     );
   }
 }
