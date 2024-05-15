@@ -5,18 +5,28 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';     
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter/widgets.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 import 'app_state.dart';
 import 'homepage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await _requestPermissions();
   await Firebase.initializeApp(); 
 
   runApp(ChangeNotifierProvider(
     create: (context) => ApplicationState(),
     builder: ((context, child) => const App()),
   ));
+}
+
+Future<void> _requestPermissions() async {
+  final PermissionStatus status = await Permission.activityRecognition.request();
+
+  if (status != PermissionStatus.granted) {
+    print('Permission for physical activity not granted');
+  }
 }
 
 final _router = GoRouter(
