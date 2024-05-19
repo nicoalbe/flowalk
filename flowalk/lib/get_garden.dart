@@ -114,6 +114,8 @@ class MonthItem extends StatelessWidget {
             DateTime dateB = dateFormat.parse(b['date']);
             return dateA.compareTo(dateB);
           });
+
+          // Adding a fake element at the end of the list
           return Column(
             children: [
               Text(
@@ -123,35 +125,45 @@ class MonthItem extends StatelessWidget {
               SizedBox(height: 10),
               Expanded(
                 child: ListView.builder(
-                  itemCount: stepsData.length,
+                  itemCount: stepsData.length + 1, // One extra item for the fake element
                   itemBuilder: (context, index) {
-                    int steps = stepsData[index]['steps'];
-                    String date = stepsData[index]['date'];
-                    int day = DateFormat('dd-MM-yyyy').parse(date).day;
-                    double percentage = steps / stepGoal;
-                    String imagePath = 'assets/';
-                    if (percentage < 0.5) {
-                      imagePath += '00pot.png';
-                    } else if (percentage < 0.75) {
-                      imagePath += '01bud.png';
-                    } else if (percentage < 1) {
-                      imagePath += '02small.png';
+                    if (index == stepsData.length) {
+                      // Fake element
+                      return ListTile(
+                        title: Container(
+                          height: 70, // Height of the empty box
+                          color: Colors.transparent, // Make it transparent or any color you prefer
+                        ),
+                      );
                     } else {
-                      imagePath += '03flower.png';
+                      int steps = stepsData[index]['steps'];
+                      String date = stepsData[index]['date'];
+                      int day = DateFormat('dd-MM-yyyy').parse(date).day;
+                      double percentage = steps / stepGoal;
+                      String imagePath = 'assets/';
+                      if (percentage < 0.5) {
+                        imagePath += '00pot.png';
+                      } else if (percentage < 0.75) {
+                        imagePath += '01bud.png';
+                      } else if (percentage < 1) {
+                        imagePath += '02small.png';
+                      } else {
+                        imagePath += '03flower.png';
+                      }
+                      return ListTile(
+                        title: Row(
+                          children: [
+                            Image.asset(
+                              imagePath,
+                              width: 70,
+                              height: 70,
+                            ),
+                            SizedBox(width: 10),
+                            Text('Day $day, steps: $steps'),
+                          ],
+                        ),
+                      );
                     }
-                    return ListTile(
-                      title: Row(
-                        children: [
-                          Image.asset(
-                            imagePath,
-                            width: 70,
-                            height: 70,
-                          ),
-                          SizedBox(width: 10),
-                          Text('Day $day, steps: $steps'),
-                        ],
-                      ),
-                    );
                   },
                 ),
               ),
@@ -199,10 +211,7 @@ class GardenFunc extends StatelessWidget {
         children: [
           Visibility(
             visible: loggedIn,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: Garden(),
-            ),
+            child: Garden(),
           ),
           Visibility(
             visible: !loggedIn,

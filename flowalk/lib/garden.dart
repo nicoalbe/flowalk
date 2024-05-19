@@ -19,9 +19,11 @@ class _GardenPageState extends State<GardenPage> {
     return Scaffold(
       body: ListView(
         children: <Widget>[
-          Consumer<ApplicationState>(
-            builder: (context,appState,_) => GardenFunc(loggedIn:appState.loggedIn)
-            ),
+          Expanded(
+            child: Consumer<ApplicationState>(
+              builder: (context,appState,_) => GardenFunc(loggedIn:appState.loggedIn)
+              ),
+          ),
         ],
       ),
     );

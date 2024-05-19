@@ -33,49 +33,50 @@ class _SettingPageState extends State<SettingPage> {
                   },
                 ),
               ),
-              if (Provider.of<ApplicationState>(context, listen: false).loggedIn)
-                TextFormField(
-                  controller: _stepGoalController,
-                  decoration: const InputDecoration(labelText: 'Step Goal'),
-                  keyboardType: TextInputType.number,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter a step goal';
+              TextFormField(
+                controller: _stepGoalController,
+                decoration: const InputDecoration(labelText: 'Step Goal'),
+                keyboardType: TextInputType.number,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter a step goal';
+                  }
+                  final int goal = int.tryParse(value)!;
+                  if (goal <= 0) {
+                    return 'Step goal must be greater than zero';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () async {
+                  if (_formKey.currentState!.validate()) {
+                    final int goal = int.parse(_stepGoalController.text);
+                    final String? userId = FirebaseAuth.instance.currentUser?.uid;
+                    if (userId != null) {
+                      await FirebaseFirestore.instance.collection('goals').doc(userId).set(
+                        {
+                          'user': userId,
+                          'goal': goal,
+                        },
+                        SetOptions(merge: true),
+                      );
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Step goal updated successfully')),
+                      );
+                      // Trigger a rebuild of the FutureBuilder to update the displayed goal
+                      setState(() {});
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Error: User not logged in')),
+                      );
+                      
                     }
-                    final int goal = int.tryParse(value)!;
-                    if (goal <= 0) {
-                      return 'Step goal must be greater than zero';
-                    }
-                    return null;
-                  },
-                ),
-              if (Provider.of<ApplicationState>(context, listen: false).loggedIn)
-                ElevatedButton(
-                  onPressed: () async {
-                    if (_formKey.currentState!.validate()) {
-                      final int goal = int.parse(_stepGoalController.text);
-                      final String? userId = FirebaseAuth.instance.currentUser?.uid;
-                      if (userId != null) {
-                        await FirebaseFirestore.instance.collection('goals').doc(userId).set(
-                          {
-                            'user': userId,
-                            'goal': goal,
-                          },
-                          SetOptions(merge: true),
-                        );
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Step goal updated successfully')),
-                        );
-                        setState(() {});
-                      } else {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Error: User not logged in')),
-                        );
-                      }
-                    }
-                  },
-                  child: const Text('Set Goal'),
-                ),
+                  }
+                },
+                child: const Text('Set Goal'),
+              ),
               const SizedBox(height: 16),
               FutureBuilder<DocumentSnapshot>(
                 future: FirebaseFirestore.instance.collection('goals').doc(FirebaseAuth.instance.currentUser?.uid).get(),
@@ -85,21 +86,21 @@ class _SettingPageState extends State<SettingPage> {
                   } else if (snapshot.hasError) {
                     return Text('Error: ${snapshot.error}');
                   } else if (!snapshot.hasData || !snapshot.data!.exists) {
-                    if (Provider.of<ApplicationState>(context, listen: false).loggedIn) {
-                      return const Text('No step goal set');
-                    } else {
-                      return const SizedBox();
-                    }
+                    return const Text('No step goal set');
+                    
                   } else {
                     final goal = snapshot.data!.get('goal');
-                    if (Provider.of<ApplicationState>(context, listen: false).loggedIn) {
-                      return Text('Current step goal: $goal');
-                    } else {
-                      return const SizedBox();
-                    }
+                    return Text('Current step goal: $goal');
                   }
                 },
               ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: const Text(
+                  "As part of a healty life, we suggest a daily step goal of 8000-10000 steps.",
+                  style: TextStyle(fontStyle: FontStyle.italic),),
+              ),
+              const Divider(height: 40,),
             ],
           ),
         ),
