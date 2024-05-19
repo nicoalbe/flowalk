@@ -199,28 +199,27 @@ class _StepCounterState extends State<StepCounter> {
     if (querySnapshot.docs.isNotEmpty) {
       // Document exists, retrieve the value of the "steps_start" field
       yesterdaySteps = querySnapshot.docs.first['steps_start'];
+      // Get the current step count
+      int? currentStepCount = await getCurrentStepCount();
+      if (currentStepCount == null) {
+        print('Error retrieving current step count');
+        return;
+      }
+
+      CollectionReference gardenCollection = FirebaseFirestore.instance.collection('garden');
+      // Update steps count for yesterday
+      try {
+        await gardenCollection.add({
+          'user': user.uid,
+          'date': yesterdayDateString,
+          'steps': currentStepCount - yesterdaySteps,
+        });
+        print('Steps updated successfully for yesterday');
+      } catch (error) {
+        print('Error updating steps for yesterday: $error');
+      }
     } else {
       print('Document not found for user $user and date $yesterdayDateString');
-    }
-
-    // Get the current step count
-    int? currentStepCount = await getCurrentStepCount();
-    if (currentStepCount == null) {
-      print('Error retrieving current step count');
-      return;
-    }
-
-    CollectionReference gardenCollection = FirebaseFirestore.instance.collection('garden');
-    // Update steps count for yesterday
-    try {
-      await gardenCollection.add({
-        'user': user.uid,
-        'date': yesterdayDateString,
-        'steps': currentStepCount - yesterdaySteps,
-      });
-      print('Steps updated successfully for yesterday');
-    } catch (error) {
-      print('Error updating steps for yesterday: $error');
     }
   }
 
