@@ -19,9 +19,6 @@ class _SettingPageState extends State<SettingPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Flowalk'),
-      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -74,6 +71,7 @@ class _SettingPageState extends State<SettingPage> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Error: User not logged in')),
                       );
+                      
                     }
                   }
                 },
@@ -89,12 +87,20 @@ class _SettingPageState extends State<SettingPage> {
                     return Text('Error: ${snapshot.error}');
                   } else if (!snapshot.hasData || !snapshot.data!.exists) {
                     return const Text('No step goal set');
+                    
                   } else {
                     final goal = snapshot.data!.get('goal');
                     return Text('Current step goal: $goal');
                   }
                 },
               ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: const Text(
+                  "As part of a healty life, we suggest a daily step goal of 8000-10000 steps.",
+                  style: TextStyle(fontStyle: FontStyle.italic),),
+              ),
+              const Divider(height: 40,),
             ],
           ),
         ),

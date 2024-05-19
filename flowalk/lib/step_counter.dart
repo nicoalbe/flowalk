@@ -13,8 +13,8 @@ class StepCounter extends StatefulWidget {
 }
 
 class _StepCounterState extends State<StepCounter> {
-  int _stepCount = -1; 
-  int _stepGoal = 0;
+  int _stepCount = -1;
+  int _stepGoal = 10000;
   StreamSubscription<StepCount>? _subscription;
   FirebaseFirestore db = FirebaseFirestore.instance;
   late Timer _timer;
@@ -33,8 +33,8 @@ class _StepCounterState extends State<StepCounter> {
   void dispose() {
     super.dispose();
     _stopListening();
+    _timer.cancel();
   }
-
   void _startListening() {
     _subscription = Pedometer.stepCountStream.listen(
       (StepCount stepCount) async {
@@ -59,26 +59,37 @@ class _StepCounterState extends State<StepCounter> {
   }
   
   Future<void> _fetchStepGoal() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      print('User not logged in');
-      return;
-    }
-
-    String userId = user.uid;
-    
-    try {
-      DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance.collection('goals').doc(userId).get();
-      if (documentSnapshot.exists) {
-        Map<String, dynamic> data = documentSnapshot.data() as Map<String, dynamic>;
-        setState(() {
-          _stepGoal = data['goal'] ?? 0;
-        });
-      }
-    } catch (error) {
-      print('Error fetching step goal: $error');
-    }
+  User? user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    print('User not logged in');
+    return;
   }
+
+  String userId = user.uid;
+
+  try {
+    DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance.collection('goals').doc(userId).get();
+    if (documentSnapshot.exists) {
+      // Document already exists, retrieve the goal
+      Map<String, dynamic> data = documentSnapshot.data() as Map<String, dynamic>;
+      setState(() {
+        _stepGoal = data['goal'] ?? 0;
+      });
+    } else {
+      // Document does not exist, create a new one with goal set to 10000
+      await FirebaseFirestore.instance.collection('goals').doc(userId).set({
+        'goal': 10000,
+        'user': userId,
+      });
+      setState(() {
+        _stepGoal = 10000;
+      });
+      print('Step goal document created successfully');
+    }
+  } catch (error) {
+    print('Error fetching/creating step goal: $error');
+  }
+}
   
   Future<int> getTodaySteps(int stepCount) async {
     User? user = FirebaseAuth.instance.currentUser;
@@ -188,28 +199,27 @@ class _StepCounterState extends State<StepCounter> {
     if (querySnapshot.docs.isNotEmpty) {
       // Document exists, retrieve the value of the "steps_start" field
       yesterdaySteps = querySnapshot.docs.first['steps_start'];
+      // Get the current step count
+      int? currentStepCount = await getCurrentStepCount();
+      if (currentStepCount == null) {
+        print('Error retrieving current step count');
+        return;
+      }
+
+      CollectionReference gardenCollection = FirebaseFirestore.instance.collection('garden');
+      // Update steps count for yesterday
+      try {
+        await gardenCollection.add({
+          'user': user.uid,
+          'date': yesterdayDateString,
+          'steps': currentStepCount - yesterdaySteps,
+        });
+        print('Steps updated successfully for yesterday');
+      } catch (error) {
+        print('Error updating steps for yesterday: $error');
+      }
     } else {
       print('Document not found for user $user and date $yesterdayDateString');
-    }
-
-    // Get the current step count
-    int? currentStepCount = await getCurrentStepCount();
-    if (currentStepCount == null) {
-      print('Error retrieving current step count');
-      return;
-    }
-
-    CollectionReference gardenCollection = FirebaseFirestore.instance.collection('garden');
-    // Update steps count for yesterday
-    try {
-      await gardenCollection.add({
-        'user': user.uid,
-        'date': yesterdayDateString,
-        'steps': currentStepCount - yesterdaySteps,
-      });
-      print('Steps updated successfully for yesterday');
-    } catch (error) {
-      print('Error updating steps for yesterday: $error');
     }
   }
 
@@ -256,19 +266,52 @@ class _StepCounterState extends State<StepCounter> {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          Text(
-            'Step Count:',
-            style: TextStyle(fontSize: 24),
+          Center(
+            child: Text(
+            'Step Count',
+            style: TextStyle(
+              fontSize: 30,
+              shadows: [
+                Shadow(
+                  color: Colors.grey.withOpacity(0.5),
+                  blurRadius: 2,
+                  offset: Offset(2, 2),
+                ),
+              ],
+            ),
+          ),
           ),
           SizedBox(height: 10),
-          Text(
-            '$_stepCount',
-            style: TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+          Container(
+            width: 200,
+            height: 200,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.green.withOpacity(0.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.green.withOpacity(0.3),
+                  spreadRadius: 5,
+                  blurRadius: 7,
+                  offset: Offset(0, 3),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Text(
+                '$_stepCount',
+                style: TextStyle(
+                  fontSize: 48,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
           Image.asset(
             imagePath,
-            width: 100,
-            height: 100,
+            width: 300,
+            height: 300,
             fit: BoxFit.contain,
           ),
         ],
@@ -292,20 +335,28 @@ class StepFunc extends StatefulWidget {
 class _StepFuncState extends State<StepFunc> {
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Visibility(
-          visible: widget.loggedIn,
-          child: Padding(
-            padding: const EdgeInsets.only(left: 24, bottom: 8),
+    return Center(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Visibility(
+            visible: widget.loggedIn,
             child: StepCounter(),
           ),
-        ),
-        Visibility(
-          visible: !widget.loggedIn,
-          child: const Text("pls login"),
-        ),
-      ],
+          Visibility(
+            visible: !widget.loggedIn,
+            child: Flexible(
+              child: Container(
+                padding: EdgeInsets.symmetric(horizontal: 16.0),
+                child: const Text(
+                  "Welcome to Flowalk! \nTo start using the application go to the Settings page and login or register.",
+                  style: TextStyle(fontSize: 18),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
