@@ -25,14 +25,6 @@ class _SettingPageState extends State<SettingPage> {
           key: _formKey,
           child: Column(
             children: <Widget>[
-              Consumer<ApplicationState>(
-                builder: (context, appState, _) => AuthFunc(
-                  loggedIn: appState.loggedIn,
-                  signOut: () {
-                    FirebaseAuth.instance.signOut();
-                  },
-                ),
-              ),
               TextFormField(
                 controller: _stepGoalController,
                 decoration: const InputDecoration(labelText: 'Step Goal'),
@@ -49,33 +41,38 @@ class _SettingPageState extends State<SettingPage> {
                 },
               ),
               const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    final int goal = int.parse(_stepGoalController.text);
-                    final String? userId = FirebaseAuth.instance.currentUser?.uid;
-                    if (userId != null) {
-                      await FirebaseFirestore.instance.collection('goals').doc(userId).set(
-                        {
-                          'user': userId,
-                          'goal': goal,
-                        },
-                        SetOptions(merge: true),
-                      );
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Step goal updated successfully')),
-                      );
-                      // Trigger a rebuild of the FutureBuilder to update the displayed goal
-                      setState(() {});
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Error: User not logged in')),
-                      );
-                      
+              ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: 50.0, // Set the minimum height here
+                ),
+                child: ElevatedButton(
+                  onPressed: () async {
+                    if (_formKey.currentState!.validate()) {
+                      final int goal = int.parse(_stepGoalController.text);
+                      final String? userId = FirebaseAuth.instance.currentUser?.uid;
+                      if (userId != null) {
+                        await FirebaseFirestore.instance.collection('goals').doc(userId).set(
+                          {
+                            'user': userId,
+                            'goal': goal,
+                          },
+                          SetOptions(merge: true),
+                        );
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Step goal updated successfully')),
+                        );
+                        // Trigger a rebuild of the FutureBuilder to update the displayed goal
+                        setState(() {});
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Error: User not logged in')),
+                        );
+                        
+                      }
                     }
-                  }
-                },
-                child: const Text('Set Goal'),
+                  },
+                  child: const Text('Set Goal'),
+                ),
               ),
               const SizedBox(height: 16),
               FutureBuilder<DocumentSnapshot>(
@@ -90,7 +87,24 @@ class _SettingPageState extends State<SettingPage> {
                     
                   } else {
                     final goal = snapshot.data!.get('goal');
-                    return Text('Current step goal: $goal');
+                    return Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: RichText(
+                        text: TextSpan(
+                          style: TextStyle(
+                            fontSize: 18.0, // Adjust the font size as needed
+                            color: Colors.black, // Text color
+                          ),
+                          children: <TextSpan>[
+                            TextSpan(text: 'Current step goal: '),
+                            TextSpan(
+                              text: '$goal',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
                   }
                 },
               ),
@@ -101,6 +115,15 @@ class _SettingPageState extends State<SettingPage> {
                   style: TextStyle(fontStyle: FontStyle.italic),),
               ),
               const Divider(height: 40,),
+              SizedBox(height: 50.0),
+              Consumer<ApplicationState>(
+                builder: (context, appState, _) => AuthFunc(
+                  loggedIn: appState.loggedIn,
+                  signOut: () {
+                    FirebaseAuth.instance.signOut();
+                  },
+                ),
+              ),
             ],
           ),
         ),
